@@ -118,7 +118,6 @@ def update(frame):
     return []
 
 canvas.draw()
-image = np.zeros((2160, 3840, 4))
 
 import subprocess
 
