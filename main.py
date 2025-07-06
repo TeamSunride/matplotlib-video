@@ -45,7 +45,7 @@ class VideoOverlay:
     video_file: Path
     output_path: str
 
-    def __init__(self, video_file: str, output_path: str):
+    def __init__(self, video_file: str, output_path: str, slowmo_amount=None):
         self.video_file = Path(video_file)
         self.output_path = output_path
 
@@ -62,6 +62,10 @@ class VideoOverlay:
         self.frames = int(video_stream.get("nb_frames"))
         self.width = int(video_stream.get("coded_width"))
         self.height = int(video_stream.get("coded_height"))
+
+        if slowmo_amount is not None:
+            self.duration /= slowmo_amount
+
         self.interval = self.duration / self.frames
 
         logging.info(f"Loaded video: {self.video_file}")
@@ -86,7 +90,7 @@ class VideoOverlay:
                 "-filter_complex", "[0:0][1:0]overlay[out]",
                 "-shortest",
                 "-map", "[out]",
-                "-map", "0:1",
+                "-map", "0:1?",
                 "-c:a", "copy",
                 #        "-vcodec", "h264_amf",
                 #        "-crf", "15",
@@ -120,10 +124,11 @@ class LineGraphVideoOverlay(VideoOverlay):
     user_ylim = None
 
     def __init__(self, video_file: str, output_path: str, data_time_at_video_start: float, title: str, ylabel: str,
-                 ylim=None):
-        super().__init__(video_file=video_file, output_path=output_path)
+                 ylim=None, slowmo_amount=None):
+        super().__init__(video_file=video_file, output_path=output_path, slowmo_amount=slowmo_amount)
         graph_width_inches = self.width / self.graph_dpi
         graph_height_inches = self.height / self.graph_dpi
+        plt.figure()
         self.fig, self.ax = plt.subplots(figsize=(graph_width_inches, graph_height_inches), dpi=self.graph_dpi)
         self.canvas = FigureCanvasAgg(self.fig)
         self.data_time_at_video_start = data_time_at_video_start
@@ -132,11 +137,12 @@ class LineGraphVideoOverlay(VideoOverlay):
         self.title = title
         self.ylabel = ylabel
         self.ylim = ylim
+        self.channels = []
 
     def add_channel(self, channel_time, channel_data, channel_label):
         new_line = self.ax.plot(
-            time[(self.start_time <= channel_time) & (channel_time <= self.start_time)],
-            data[(self.start_time <= channel_time) & (channel_time <= self.start_time)],
+            channel_time[(self.start_time <= channel_time) & (channel_time <= self.start_time)],
+            channel_data[(self.start_time <= channel_time) & (channel_time <= self.start_time)],
         )[0]
 
         new_channel = LineGraphChannel(time=channel_time, data=channel_data, label=channel_label, line=new_line)
