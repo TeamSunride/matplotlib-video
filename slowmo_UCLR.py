@@ -12,7 +12,7 @@ overlay = LineGraphVideoOverlay(
     slowmo_amount=16.6666
 )
 
-channel_names_to_plot = ['PTX101','PTX102','PTX103']
+channel_names_to_plot = ['PTX101', 'PTX102', 'PTX103']
 
 f = h5py.File("inputs/UCLR_startup.h5", "r")
 
